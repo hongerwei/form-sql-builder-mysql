@@ -1,0 +1,13 @@
+{
+	"*":[
+		{
+			"field":"String:*",
+			"op":"like",
+			"rel":"and"
+		},{
+			"field":"*:*",
+			"op":"=",
+			"rel":"and"
+		}
+	]
+}
