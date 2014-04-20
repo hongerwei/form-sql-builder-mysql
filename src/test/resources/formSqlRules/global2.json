@@ -1,0 +1,21 @@
+{
+	"global2":[
+		{
+			"field":"String:*From",
+			"op":">",
+			"rel":"and"
+		},{
+			"field":"String:*To",
+			"op":"<",
+			"rel":"and"
+		},{
+			"field":"String:*",
+			"op":"like",
+			"rel":"and"
+		},{
+			"field":"*:*",
+			"op":"=",
+			"rel":"and"
+		}
+	]
+}
