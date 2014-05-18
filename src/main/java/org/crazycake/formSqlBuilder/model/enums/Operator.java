@@ -20,16 +20,16 @@ package org.crazycake.formSqlBuilder.model.enums;
  */
 public enum Operator {
 	
-	EQUAL("eq"," = "),
-	LESS_THAN("lt"," < "),
-	GREAT_THAN("gt"," > "),
-	NOT_EQUAL("nq"," <> "),
-	LIKE("lk"," like"),
-	NOT_LIKE("nk"," not like "),
+	EQUAL("eq","="),
+	LESS_THAN("lt","<"),
+	GREAT_THAN("gt",">"),
+	NOT_EQUAL("nq","<>"),
+	LIKE("lk","like"),
+	NOT_LIKE("nk","not like"),
 	IN("in"," in "),
-	NOT_IN("Nn"," not in "),
-	LESS_THAN_OR_EQUAL_TO("lteq"," <= "),
-	GREAT_THAN_OR_EQUAL_TO("gteq"," >= ");
+	NOT_IN("Nn","not in"),
+	LESS_THAN_OR_EQUAL_TO("lteq","<="),
+	GREAT_THAN_OR_EQUAL_TO("gteq",">=");
 	
 	private String code;
 	private String sql;
@@ -56,7 +56,7 @@ public enum Operator {
 		Operator result = Operator.LIKE;
 		Operator[] ops = Operator.values();
 		for(Operator op:ops){
-			if(op.getCode().equals(code)){
+			if(op.getSql().equals(code)){
 				result = op;
 				break;
 			}

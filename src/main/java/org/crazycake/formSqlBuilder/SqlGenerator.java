@@ -167,8 +167,10 @@ public class SqlGenerator {
 		 * 遍历Form对象所有属性
 		 * 顺序是映射文件里面从上到下
 		 */
-		//参数计数器
 		Field[] fields = form.getClass().getDeclaredFields();
+		
+		//参数计数器
+		int paramCount = 0;
 		for(int i=0;i<fields.length;i++){
 			Field field = fields[i];
 			String fieldName = field.getName();
@@ -196,12 +198,12 @@ public class SqlGenerator {
 			}
 			
 			//如果是第一个参数就加where
-			if(i == 0){
+			if(paramCount == 0){
 				sql.append("where ");
 			}
 			
 			//如果不是第一个参数就加关系符号(and 或者 or)
-			if(i != 0){
+			if(paramCount != 0){
 				sql.append(rule.getRel().getSql() + " ");
 			}
 			String targetField = rule.getTargetField();
@@ -217,6 +219,7 @@ public class SqlGenerator {
 				params.add(value);
 			}
 			
+			paramCount++;
 		}
 		return params;
 	}
