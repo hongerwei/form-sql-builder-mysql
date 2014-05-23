@@ -150,7 +150,8 @@ public class FormSqlBuilder {
 		/*
 		 * 2. 生成sql语句和参数列表
 		 */
-		SqlAndParams sqlAndParams = SqlGenerator.generateCountSql(this.form, ruleScheme,tableName);
+		SqlGenerator sqlGenerator = new SqlGenerator();
+		SqlAndParams sqlAndParams = sqlGenerator.generateCountSqlAndParams(this.form, ruleScheme,tableName);
 		
 		String sql = sqlAndParams.getSql();
 		/**
@@ -208,7 +209,8 @@ public class FormSqlBuilder {
 		/*
 		 * 2. 生成sql语句和参数列表
 		 */
-		SqlAndParams sqlAndParams = SqlGenerator.generateSql(this.form, ruleScheme,tableName);
+		SqlGenerator sqlGenerator = new SqlGenerator();
+		SqlAndParams sqlAndParams = sqlGenerator.generateSqlAndParams(this.form, ruleScheme,tableName);
 		
 		String sql = sqlAndParams.getSql();
 		/**

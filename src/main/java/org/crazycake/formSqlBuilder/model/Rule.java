@@ -1,5 +1,7 @@
 package org.crazycake.formSqlBuilder.model;
 
+import java.util.List;
+
 import org.crazycake.formSqlBuilder.model.enums.Operator;
 import org.crazycake.formSqlBuilder.model.enums.Relation;
 
@@ -7,9 +9,15 @@ public class Rule {
 	private String field;
 	private Operator op;
 	private Relation rel;
+	private List<Rule> members;
+	private boolean wildcardTargetField;
 	
+	/**
+	 * real field
+	 * only use for build process
+	 */
 	private String targetField;
-	
+		
 	public Rule(){}
 	
 	public Rule(String field,Operator op,Relation rel){
@@ -47,6 +55,22 @@ public class Rule {
 
 	public void setTargetField(String targetField) {
 		this.targetField = targetField;
+	}
+
+	public List<Rule> getMembers() {
+		return members;
+	}
+
+	public void setMembers(List<Rule> members) {
+		this.members = members;
+	}
+
+	public boolean getWildcardTargetField() {
+		return wildcardTargetField;
+	}
+
+	public void setWildcardTargetField(boolean wildcardTargetField) {
+		this.wildcardTargetField = wildcardTargetField;
 	}
 	
 }

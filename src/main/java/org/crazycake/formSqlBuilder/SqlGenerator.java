@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,9 +17,11 @@ import javax.persistence.Column;
 import org.crazycake.formSqlBuilder.model.Rule;
 import org.crazycake.formSqlBuilder.model.Sort;
 import org.crazycake.formSqlBuilder.model.SqlAndParams;
+import org.crazycake.formSqlBuilder.model.QueryNode;
 import org.crazycake.formSqlBuilder.model.enums.Operator;
 import org.crazycake.formSqlBuilder.utils.CamelNameUtils;
 import org.crazycake.formSqlBuilder.utils.ReflectUtils;
+import org.crazycake.formSqlBuilder.utils.RuleMatchUtils;
 
 /**
  * hibernate query对象的工具类
@@ -111,14 +114,12 @@ public class SqlGenerator {
 	 * @throws NoSuchFieldException 
 	 * @throws SecurityException 
 	 */
-	public static SqlAndParams generateSql(Object form, Map<String, Rule> ruleScheme,String tableName) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException{
+	public SqlAndParams generateSqlAndParams(Object form, Map<String, Rule> ruleScheme,String tableName) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException{
 		
 		StringBuffer sql = new StringBuffer();
 		sql.append("select * from " + tableName + " ");
 		
-		List<Object> params = generateParams(form, ruleScheme, sql);
-		
-		SqlAndParams sqlAndParams = new SqlAndParams(sql.toString(), params.toArray());
+		SqlAndParams sqlAndParams = generateQueryBody(form, ruleScheme, sql);
 		return sqlAndParams;
 	}
 	
@@ -135,14 +136,13 @@ public class SqlGenerator {
 	 * @throws NoSuchFieldException 
 	 * @throws SecurityException 
 	 */
-	public static SqlAndParams generateCountSql(Object form, Map<String, Rule> ruleScheme,String tableName) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException{
+	public SqlAndParams generateCountSqlAndParams(Object form, Map<String, Rule> ruleScheme,String tableName) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException{
 		
 		StringBuffer sql = new StringBuffer();
 		sql.append("select count(1) from " + tableName + " ");
 		
-		List<Object> params = generateParams(form, ruleScheme, sql);
+		SqlAndParams sqlAndParams = generateQueryBody(form, ruleScheme, sql);
 		
-		SqlAndParams sqlAndParams = new SqlAndParams(sql.toString(), params.toArray());
 		return sqlAndParams;
 	}
 	
@@ -159,216 +159,226 @@ public class SqlGenerator {
 	 * @throws NoSuchFieldException 
 	 * @throws SecurityException 
 	 */
-	private static List<Object> generateParams(Object form,
-			Map<String, Rule> ruleScheme, StringBuffer sql) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException {
+	private SqlAndParams generateQueryBody(Object form, Map<String, Rule> ruleScheme, StringBuffer sql) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException {
+		
 		List<Object> params = new ArrayList<Object>();
 		
-		/**
-		 * 遍历Form对象所有属性
-		 * 顺序是映射文件里面从上到下
-		 */
-		Field[] fields = form.getClass().getDeclaredFields();
+		//pick field
+		List<QueryNode> collectedResult = pickFieldWithRule(form, ruleScheme);
 		
-		//参数计数器
-		int paramCount = 0;
-		for(int i=0;i<fields.length;i++){
-			Field field = fields[i];
-			String fieldName = field.getName();
-			//如果是 serialVersionUID 属性就跳过
-			if("serialVersionUID".equals(fieldName)){
-				continue;
-			}
-			
-			/**
-			 * 获取值对象
-			 */
-			Object value = ReflectUtils.getFormValue(form, fieldName);
-			
-			/**
-			 * 如果 value == null 表示本次查询不对该条件限制
-			 */
-			if(value==null){
-				continue;
-			}
-			
-			//获取该field对应的规则
-			Rule rule = getRuleByField(ruleScheme, field);
-			if(rule==null){
-				continue;
-			}
-			
-			//如果是第一个参数就加where
-			if(paramCount == 0){
-				sql.append("where ");
-			}
-			
-			//如果不是第一个参数就加关系符号(and 或者 or)
-			if(paramCount != 0){
-				sql.append(rule.getRel().getSql() + " ");
-			}
-			String targetField = rule.getTargetField();
-			if(targetField == null || "".equals(targetField)){
-				targetField = rule.getField();
-			}
-			sql.append(guessColumnName(form,targetField) + " " + rule.getOp().getSql() + " ? ");
-			
-			if(rule.getOp()==Operator.LIKE && value instanceof String){
-				//等于操作并且类型是String的要把值前后加%
-				params.add("%" + value + "%");
+		//use collectedResult to generate sql and params
+		int paramCounter = 0;
+		for(QueryNode queryNode : collectedResult){
+			//if queryNode is a group
+			if(queryNode.getMembers().size()>0){
+				
+				if(paramCounter > 0){
+					sql.append(queryNode.getRel() + " ");
+				}else{
+					sql.append("where ");
+				}
+				
+				sql.append("( ");
+				List<QueryNode> memberNodes = queryNode.getMembers();
+				for(int i=0;i<memberNodes.size();i++){
+					QueryNode node = memberNodes.get(i);
+					if(i != 0){
+						sql.append(node.getRel() + " ");
+					}
+					sql.append(ReflectUtils.guessColumnName(form,node.getField()) + " " + node.getOp() + " ? ");
+					params.add(getValue(form, node));
+				}
+				sql.append(") ");
+				
+				paramCounter++;
 			}else{
-				params.add(value);
+				//a single query node
+				if(paramCounter > 0){
+					sql.append(queryNode.getRel() + " ");
+				}else{
+					sql.append("where ");
+				}
+				
+				sql.append(ReflectUtils.guessColumnName(form,queryNode.getField()) + " " + queryNode.getOp() + " ? ");
+				params.add(getValue(form,queryNode));
+				paramCounter++;
 			}
-			
-			paramCount++;
-		}
-		return params;
-	}
-	
-	/**
-	 * 根据fieldName获取匹配的Rule
-	 * @param fieldName
-	 * @return
-	 */
-	private static Rule getRuleByField(Map<String, Rule> ruleScheme,Field field){
-		Rule rule = null;
-		
-		//directly get Rule by fieldName
-		rule = ruleScheme.get(field.getName());
-		if(rule != null){
-			return rule;
 		}
 		
-		//if we can't get Rule directly by fieldName , try regex type
-		Iterator<Map.Entry<String, Rule>> it = ruleScheme.entrySet().iterator();
-		while(it.hasNext()){
-			Map.Entry<String, Rule> entry = it.next();
-			String wildcardDefined = entry.getKey();
-			if(wildcardDefined.indexOf(":") == -1){
-				//if wildcardDefined doesn't contain : means it's not a correct format , so pass it
-				continue;
-			}
+		//create sqlAndParams
+		SqlAndParams sqlAndParams = new SqlAndParams();
+		sqlAndParams.setParams(params.toArray());
+		sqlAndParams.setSql(sql.toString());
 
-			String[] temp = wildcardDefined.split(":");
-			
-			//rule type
-			String typeName = temp[0];
-			
-			//field match wildcard
-			String wildcardExpression = temp[1];
-			
-			//if type not a "*" or equal field class name it will continue.
-			boolean cannotMatchType = checkTypeMatch(field, typeName);
-			if(cannotMatchType){
-				continue;
-			}
-			
-			//wildcard match begin!
-			
-			//get target field 
-			String targetField = getTargetFieldByWildcard(wildcardExpression,field);
-			if("".equals(targetField)){
-				//not match!
-				continue;
-			}
-			
-			//all match!
-			Rule matchedRule = entry.getValue();
-			rule = new Rule();
-			rule.setField(matchedRule.getField());
-			rule.setOp(matchedRule.getOp());
-			rule.setRel(matchedRule.getRel());
-			if(matchedRule.getTargetField() == null || "".equals(matchedRule.getTargetField())){
-				rule.setTargetField(targetField);
-			}else{
-				rule.setTargetField(matchedRule.getTargetField());
-			}
-			break;
-			
-		}
-		return rule;
+		//return it!
+		return sqlAndParams;
 	}
 	
 	/**
-	 * check whether field class name matched type name
-	 * @param field
-	 * @param typeName
-	 * @return
-	 */
-	private static boolean checkTypeMatch(Field field,String typeName){
-		Class fieldClass = field.getType();
-		String fieldClassName = fieldClass.getName();
-		String fieldClassLastName = fieldClassName.substring(fieldClassName.lastIndexOf(".")+1);
-		boolean cannotMatchType = !"*".equals(typeName) && !fieldClassLastName.equals(typeName);
-		return cannotMatchType;
-	}
-	
-	/**
-	 * get origin field by wildcard and fieldname
-	 * @param wildcardExpression
-	 * @param fieldName
-	 * @return
-	 */
-	private static String getTargetFieldByWildcard(String wildcardExpression, Field field) {
-		String fieldName = field.getName();
-		String targetField = "";
-		if("*".endsWith(wildcardExpression)){
-			//match any word
-			targetField = fieldName;
-			return targetField;
-		}
-		
-		int wildcardIndex = wildcardExpression.indexOf("*");
-		if(wildcardIndex==0){
-			//begin of line
-			String suffix = wildcardExpression.substring(1);
-			if(fieldName.endsWith(suffix)){
-				//match!
-				int suffixLen = suffix.length();
-				targetField = fieldName.substring(0, (fieldName.length()-suffixLen));
-			}
-		}else if(wildcardIndex==(wildcardExpression.length()-1)){
-			//end of line
-			String prefix = wildcardExpression.substring(0,wildcardExpression.length()-1);
-			if(fieldName.startsWith(prefix)){
-				//match!
-				targetField = fieldName.substring(prefix.length());
-			}
-		}else{
-			//middle of line
-			String[] fixArr = wildcardExpression.split("*");
-			String prefix = fixArr[0];
-			String suffix = fixArr[1];
-			if(fieldName.startsWith(prefix)&&fieldName.endsWith(suffix)){
-				//match!
-				int suffixLen = suffix.length();
-				targetField = fieldName.substring(prefix.length(),(fieldName.length()-suffixLen));
-			}
-		}
-		return targetField;
-	}
-
-	
-	/**
-	 * 猜测字段名
-	 * @param field
+	 * 从form中获取value
+	 * if sourceField has value then use sourceField to getValue
+	 * if not use field to getValue
+	 * @param form
+	 * @param queryNode
 	 * @return
 	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
 	 * @throws SecurityException 
+	 * @throws IllegalArgumentException 
 	 */
-	public static String guessColumnName(Object form,String fieldName) throws SecurityException, NoSuchMethodException {
-		String colName = "";
-		
-		//try to get col name from annotation
-		Method getter = ReflectUtils.getGetterByFieldName(form,fieldName);
-		Column colAnno = getter.getAnnotation(Column.class);
-		if(colAnno != null){
-			//if this field getter hasAnnotation
-			colName = colAnno.name();
+	private Object getValue(Object form,QueryNode queryNode) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException{
+		String sourceField = queryNode.getSourceField();
+		if(sourceField != null && !"".equals(sourceField)){
+			return ReflectUtils.getValue(form,sourceField);
+		}else{
+			return ReflectUtils.getValue(form,queryNode.getField());
 		}
-		if("".equals(colName)){
-			colName = CamelNameUtils.camel2underscore(fieldName);
-		}
-		return colName;
 	}
+	
+	/**
+	 * pick field from class with rule
+	 * @param form
+	 * @param ruleScheme
+	 * @return
+	 */
+	private List<QueryNode> pickFieldWithRule(Object form, Map<String, Rule> ruleScheme){
+		//遍历all fields to make a field map
+		List<Field> fieldList = createFieldList(form);
+		
+		//query node list to save the collect result
+		List<QueryNode> collectedResult = new ArrayList<QueryNode>();
+		
+		//遍历rule，用rule来collect field map. Once a field been collected , it will be removed from field list
+		Iterator<Map.Entry<String, Rule>> ruleIt = ruleScheme.entrySet().iterator();
+		while(ruleIt.hasNext()){
+			Map.Entry<String, Rule> ruleEntry = ruleIt.next();
+			Rule rule = ruleEntry.getValue();
+			
+			//scan the field map and try to collect field
+			List<QueryNode> pickResult = pickFields(fieldList, rule);
+			collectedResult.addAll(pickResult);
+		}
+		
+		return collectedResult;
+	}
+	
+	/**
+	 * pick field without : 1. no getter 2. no value
+	 * @param form
+	 * @return
+	 */
+	private List<Field> createFieldList(Object form){
+		List<Field> fieldList = new ArrayList<Field>();
+		
+		Field[] allFields = form.getClass().getDeclaredFields();
+		
+		for(Field field : allFields){
+			
+			//check if hasGetter
+			Method getter = null;
+			try {
+				getter = ReflectUtils.getGetterByFieldName(form, field.getName());
+			} catch (Exception e) {
+				continue;
+			}
+			
+			//check this field whether it has value
+			Object value = null;
+			try {
+				value = getter.invoke(form);
+			} catch (Exception e) {
+				continue;
+			}
+			
+			if(value != null){
+				fieldList.add(field);
+			}
+		}
+		
+		return fieldList;
+	}
+	
+	/**
+	 * 用一个rule从field列表里面检索出符合条件的 queryNode
+	 * @param fieldList
+	 * @param rule
+	 * @return
+	 */
+	private List<QueryNode> pickFields(List<Field> fieldList, Rule rule){
+		
+		List<QueryNode> pickResult = new ArrayList<QueryNode>();
+		
+		if(rule.getMembers() != null && rule.getMembers().size()>0){
+			//it's a group
+			List<Rule> members = rule.getMembers();
+			List<QueryNode> queryNodeMembers = new ArrayList<QueryNode>();
+			for(Rule member:members){
+				List<QueryNode> queryNodes = pickFieldsWithSingleRule(fieldList,member);
+				queryNodeMembers.addAll(queryNodes);
+			}
+			if(queryNodeMembers.size()>0){
+				QueryNode groupQueryNode = new QueryNode(queryNodeMembers, rule.getRel().getSql());
+				pickResult.add(groupQueryNode);
+			}
+		}else{
+			//it's a single node
+			List<QueryNode> queryNodes = pickFieldsWithSingleRule(fieldList,rule);
+			pickResult.addAll(queryNodes);
+		}
+		
+		return pickResult;
+	}
+	
+	/**
+	 * pick fields with this rule
+	 * @param fieldList
+	 * @param rule
+	 * @return
+	 */
+	private List<QueryNode> pickFieldsWithSingleRule(List<Field> fieldList, Rule rule){
+		List<QueryNode> pickResult = new ArrayList<QueryNode>();
+		
+		Iterator<Field> it = fieldList.iterator();
+		while(it.hasNext()){
+			Field field = it.next();
+			
+			QueryNode queryNode = matchRule(field,rule);
+			
+			if(queryNode != null){
+				pickResult.add(queryNode);
+				it.remove();
+			}
+		}
+		return pickResult;
+	}
+	
+	/**
+	 * try to match field with this rule
+	 * @param field
+	 * @param rule
+	 * @return
+	 */
+	private QueryNode matchRule(Field field,Rule rule){
+		QueryNode queryNode = null;
+		
+		String fieldExpr = rule.getField();
+		if(fieldExpr.contains("*")){
+			//wildcard match
+			queryNode = RuleMatchUtils.wildcardMatch(field, rule);
+		}else if(fieldExpr.contains(":")){
+			//full name match
+			queryNode = RuleMatchUtils.fullnameMatch(field, rule);
+		}else{
+			//short nama match
+			queryNode = RuleMatchUtils.shortnameMatch(field, rule);
+		}
+		
+		return queryNode;
+		
+	}
+
+	
+	
 	
 }

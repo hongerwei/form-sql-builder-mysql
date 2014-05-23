@@ -3,10 +3,12 @@
 		{
 			"field":"String:*From",
 			"op":">",
+			"wildcardTargetField":true,
 			"rel":"and"
 		},{
 			"field":"String:*To",
 			"op":"<",
+			"wildcardTargetField":true,
 			"rel":"and"
 		},{
 			"field":"String:*",

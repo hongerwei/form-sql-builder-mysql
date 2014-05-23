@@ -3,6 +3,7 @@ package org.crazycake.formSqlBuilder.utils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import javax.persistence.Column;
 import javax.persistence.Transient;
 
 import org.slf4j.Logger;
@@ -62,4 +63,43 @@ public class ReflectUtils {
 		return getter;
 	}
 	
+	/**
+	 * 猜测字段名
+	 * @param field
+	 * @return
+	 * @throws NoSuchMethodException 
+	 * @throws SecurityException 
+	 */
+	public static String guessColumnName(Object form,String fieldName) throws SecurityException, NoSuchMethodException {
+		String colName = "";
+		
+		//try to get col name from annotation
+		Method getter = ReflectUtils.getGetterByFieldName(form,fieldName);
+		Column colAnno = getter.getAnnotation(Column.class);
+		if(colAnno != null){
+			//if this field getter hasAnnotation
+			colName = colAnno.name();
+		}
+		if("".equals(colName)){
+			colName = CamelNameUtils.camel2underscore(fieldName);
+		}
+		return colName;
+	}
+	
+	/**
+	 * 
+	 * @param form
+	 * @param fieldName
+	 * @return
+	 * @throws IllegalArgumentException
+	 * @throws IllegalAccessException
+	 * @throws InvocationTargetException
+	 * @throws SecurityException
+	 * @throws NoSuchMethodException
+	 */
+	public static Object getValue(Object form,String fieldName) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchMethodException{
+		Method getter = ReflectUtils.getGetterByFieldName(form, fieldName);
+		Object value = getter.invoke(form);
+		return value;
+	}
 }
