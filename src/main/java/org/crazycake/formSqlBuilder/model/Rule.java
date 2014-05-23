@@ -1,5 +1,7 @@
 package org.crazycake.formSqlBuilder.model;
 
+import java.util.List;
+
 import org.crazycake.formSqlBuilder.model.enums.Operator;
 import org.crazycake.formSqlBuilder.model.enums.Relation;
 
@@ -7,6 +9,8 @@ public class Rule {
 	private String field;
 	private Operator op;
 	private Relation rel;
+	private Relation groupRel;
+	private List<Rule> members;
 	
 	private String targetField;
 	
@@ -47,6 +51,22 @@ public class Rule {
 
 	public void setTargetField(String targetField) {
 		this.targetField = targetField;
+	}
+
+	public Relation getGroupRel() {
+		return groupRel;
+	}
+
+	public void setGroupRel(Relation groupRel) {
+		this.groupRel = groupRel;
+	}
+
+	public List<Rule> getMembers() {
+		return members;
+	}
+
+	public void setMembers(List<Rule> members) {
+		this.members = members;
 	}
 	
 }

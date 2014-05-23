@@ -1,0 +1,23 @@
+{
+	"groupSearch":[
+		{
+			"field":"Integer:activeStatus",
+			"op":"=",
+			"rel":"and"
+		},{				
+			"groupRel":"and",
+			"members":[
+				{
+					"field":"String:*",
+					"op":"like",
+					"rel":"or"
+				},
+				{
+					"field":"*:*",
+					"op":"=",
+					"rel":"or"
+				}
+			]
+		}
+	]
+}

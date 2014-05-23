@@ -1,0 +1,9 @@
+{
+	"exception":[
+		{
+			"field":"int:activeStatus",
+			"op":"=",
+			"rel":"and"
+		}
+	]
+}

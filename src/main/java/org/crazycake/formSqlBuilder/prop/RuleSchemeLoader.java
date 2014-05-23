@@ -3,6 +3,7 @@ package org.crazycake.formSqlBuilder.prop;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.crazycake.formSqlBuilder.exception.FormSqlBuilderParseException;
 import org.crazycake.formSqlBuilder.model.Rule;
 import org.crazycake.formSqlBuilder.utils.PropertiesUtils;
 
@@ -17,14 +18,18 @@ public class RuleSchemeLoader {
 	/**
 	 * 映射的json文件集合
 	 */
-	private static Hashtable<String, Map<String,Rule>> ruleSchemes;
+	private static Hashtable<String, Map<String,Rule>> ruleSchemes = new Hashtable<String, Map<String,Rule>>();
 	
 	static{
 		/**
 		 * 加载查询规则的json文件夹
 		 */
 		String rulesFolder = (String)PropertiesLoader.get("rules_folder");
-		ruleSchemes = PropertiesUtils.loadJson(rulesFolder);
+		try {
+			ruleSchemes = PropertiesUtils.loadJson(rulesFolder);
+		} catch (FormSqlBuilderParseException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static Map<String,Rule> get(String ruleSchemeId){

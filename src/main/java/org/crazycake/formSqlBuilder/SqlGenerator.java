@@ -111,12 +111,12 @@ public class SqlGenerator {
 	 * @throws NoSuchFieldException 
 	 * @throws SecurityException 
 	 */
-	public static SqlAndParams generateSql(Object form, Map<String, Rule> ruleScheme,String tableName) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException{
+	public static SqlAndParams generateSqlAndParams(Object form, Map<String, Rule> ruleScheme,String tableName) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException{
 		
 		StringBuffer sql = new StringBuffer();
 		sql.append("select * from " + tableName + " ");
 		
-		List<Object> params = generateParams(form, ruleScheme, sql);
+		List<Object> params = generateQueryBody(form, ruleScheme, sql);
 		
 		SqlAndParams sqlAndParams = new SqlAndParams(sql.toString(), params.toArray());
 		return sqlAndParams;
@@ -135,12 +135,12 @@ public class SqlGenerator {
 	 * @throws NoSuchFieldException 
 	 * @throws SecurityException 
 	 */
-	public static SqlAndParams generateCountSql(Object form, Map<String, Rule> ruleScheme,String tableName) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException{
+	public static SqlAndParams generateCountSqlAndParams(Object form, Map<String, Rule> ruleScheme,String tableName) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException{
 		
 		StringBuffer sql = new StringBuffer();
 		sql.append("select count(1) from " + tableName + " ");
 		
-		List<Object> params = generateParams(form, ruleScheme, sql);
+		List<Object> params = generateQueryBody(form, ruleScheme, sql);
 		
 		SqlAndParams sqlAndParams = new SqlAndParams(sql.toString(), params.toArray());
 		return sqlAndParams;
@@ -159,8 +159,7 @@ public class SqlGenerator {
 	 * @throws NoSuchFieldException 
 	 * @throws SecurityException 
 	 */
-	private static List<Object> generateParams(Object form,
-			Map<String, Rule> ruleScheme, StringBuffer sql) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException {
+	private static List<Object> generateQueryBody(Object form, Map<String, Rule> ruleScheme, StringBuffer sql) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException {
 		List<Object> params = new ArrayList<Object>();
 		
 		/**
@@ -197,31 +196,46 @@ public class SqlGenerator {
 				continue;
 			}
 			
-			//如果是第一个参数就加where
-			if(paramCount == 0){
-				sql.append("where ");
-			}
-			
-			//如果不是第一个参数就加关系符号(and 或者 or)
-			if(paramCount != 0){
-				sql.append(rule.getRel().getSql() + " ");
-			}
-			String targetField = rule.getTargetField();
-			if(targetField == null || "".equals(targetField)){
-				targetField = rule.getField();
-			}
-			sql.append(guessColumnName(form,targetField) + " " + rule.getOp().getSql() + " ? ");
-			
-			if(rule.getOp()==Operator.LIKE && value instanceof String){
-				//等于操作并且类型是String的要把值前后加%
-				params.add("%" + value + "%");
-			}else{
-				params.add(value);
-			}
+			//解析一个属性
+			generateField(form, sql, params, paramCount, value, rule);
 			
 			paramCount++;
 		}
 		return params;
+	}
+	
+	/**
+	 * 解析一个属性
+	 * @param form
+	 * @param sql
+	 * @param params
+	 * @param paramCount
+	 * @param value
+	 * @param rule
+	 * @throws NoSuchMethodException
+	 */
+	private static void generateField(Object form, StringBuffer sql, List<Object> params, int paramCount, Object value, Rule rule) throws NoSuchMethodException {
+		//如果是第一个参数就加where
+		if(paramCount == 0){
+			sql.append("where ");
+		}
+		
+		//如果不是第一个参数就加关系符号(and 或者 or)
+		if(paramCount != 0){
+			sql.append(rule.getRel().getSql() + " ");
+		}
+		String targetField = rule.getTargetField();
+		if(targetField == null || "".equals(targetField)){
+			targetField = rule.getField();
+		}
+		sql.append(guessColumnName(form,targetField) + " " + rule.getOp().getSql() + " ? ");
+		
+		if(rule.getOp()==Operator.LIKE && value instanceof String){
+			//等于操作并且类型是String的要把值前后加%
+			params.add("%" + value + "%");
+		}else{
+			params.add(value);
+		}
 	}
 	
 	/**
@@ -238,6 +252,18 @@ public class SqlGenerator {
 			return rule;
 		}
 		
+		//try the full expression of a field
+		String fieldTypeName = field.getType().getName();
+		String fieldTypeClassName = fieldTypeName.substring(fieldTypeName.lastIndexOf(".")+1);
+		String fullFieldName = fieldTypeClassName + ":" + field.getName();
+		rule = ruleScheme.get(fullFieldName);
+		if(rule != null){
+			if(rule.getTargetField() == null && !"".equals(rule.getTargetField())){
+				rule.setTargetField(field.getName());
+			}
+			return rule;
+		}
+		
 		//if we can't get Rule directly by fieldName , try regex type
 		Iterator<Map.Entry<String, Rule>> it = ruleScheme.entrySet().iterator();
 		while(it.hasNext()){
@@ -245,6 +271,11 @@ public class SqlGenerator {
 			String wildcardDefined = entry.getKey();
 			if(wildcardDefined.indexOf(":") == -1){
 				//if wildcardDefined doesn't contain : means it's not a correct format , so pass it
+				continue;
+			}
+			
+			if(wildcardDefined.indexOf("*") == -1){
+				//if wildcardDefined doesn't contain * means it's not a correct format , so pass it
 				continue;
 			}
 
