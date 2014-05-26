@@ -49,6 +49,7 @@ public class PropertiesUtilsTest {
 			String field = entry.getKey();
 			fieldList.add(field);
 		}
+		
 		//Integer:* should be after _group0
 		assertThat("Integer:* should be after _group0",fieldList.indexOf("Integer:*") > fieldList.indexOf("_group0"),is(true));
 	}

@@ -228,6 +228,7 @@ public class PropertiesUtils {
 		for(Map<String, Object> member:members){				
 			memberList.add(parseOneRule(member));
 		}
+		
 		r.setMembers(memberList);
 		return r;
 	}

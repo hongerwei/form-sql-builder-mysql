@@ -73,5 +73,4 @@ public class Person {
 		this.afterThat = afterThat;
 	}
 	
-	
 }

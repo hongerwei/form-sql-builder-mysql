@@ -98,6 +98,7 @@ public class SqlGeneratorTest {
 		//should have birthday > ?
 		assertThat("sql should have birthday > ?",sql.contains("birthday > ?"),is(true));
 		
+		
 		//test values
 		Object[] values = sqlAndParams.getParams();
 		assertThat("first should be 1",(Integer)values[0],is(1));

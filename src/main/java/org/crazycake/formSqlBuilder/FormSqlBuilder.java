@@ -151,6 +151,7 @@ public class FormSqlBuilder {
 		 * 2. 生成sql语句和参数列表
 		 */
 		SqlGenerator sqlGenerator = new SqlGenerator();
+		
 		SqlAndParams sqlAndParams = sqlGenerator.generateCountSqlAndParams(this.form, ruleScheme,tableName);
 		
 		String sql = sqlAndParams.getSql();

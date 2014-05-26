@@ -12,6 +12,7 @@ public class Rule {
 	private List<Rule> members;
 	private boolean wildcardTargetField;
 	
+	
 	/**
 	 * real field
 	 * only use for build process

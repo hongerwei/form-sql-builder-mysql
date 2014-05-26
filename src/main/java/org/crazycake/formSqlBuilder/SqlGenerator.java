@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.persistence.Column;
-
 import org.crazycake.formSqlBuilder.model.Rule;
 import org.crazycake.formSqlBuilder.model.Sort;
 import org.crazycake.formSqlBuilder.model.SqlAndParams;
