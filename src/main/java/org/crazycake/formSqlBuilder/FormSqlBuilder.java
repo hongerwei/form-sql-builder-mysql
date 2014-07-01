@@ -235,7 +235,7 @@ public class FormSqlBuilder {
 	 * @throws NoSuchMethodException
 	 */
 	private void useDefaultSortIfNotSet() throws NoSuchMethodException {
-		if(this.sorts == null){
+		if(this.sorts == null || this.sorts.size() == 0){
 			List<Sort> sortsList = new ArrayList<Sort>();
 			Field[] fields = form.getClass().getDeclaredFields();
 			for(Field f:fields){
