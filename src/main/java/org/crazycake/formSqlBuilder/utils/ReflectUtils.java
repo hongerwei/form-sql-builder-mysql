@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import javax.persistence.Column;
 import javax.persistence.Transient;
 
+import org.crazycake.utils.CamelNameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

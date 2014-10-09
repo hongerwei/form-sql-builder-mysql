@@ -22,7 +22,6 @@
 			"field":"Integer:*",
 			"op":"=",
 			"rel":"and"
-			
 		}
 	]
 }

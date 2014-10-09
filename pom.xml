@@ -4,7 +4,7 @@
 
 	<groupId>org.crazycake</groupId>
 	<artifactId>form-sql-builder-mysql</artifactId>
-	<version>1.0.3-RELEASE</version>
+	<version>1.0.0-RELEASE</version>
 	<packaging>jar</packaging>
 
 	<name>form-sql-builder-mysql</name>
@@ -44,6 +44,11 @@
 		<groupId>org.codehaus.jackson</groupId>
 		<artifactId>jackson-mapper-asl</artifactId>
 		<version>1.9.3</version>
+	</dependency>
+	<dependency>
+	  <groupId>org.crazycake</groupId>
+	  <artifactId>camel-name-utils</artifactId>
+	  <version>1.0.0-RELEASE</version>
 	</dependency>
   </dependencies>
   

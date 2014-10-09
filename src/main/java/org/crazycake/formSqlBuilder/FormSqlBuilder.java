@@ -11,13 +11,14 @@ import java.util.Map;
 import javax.persistence.Table;
 
 import org.crazycake.formSqlBuilder.annotation.DefaultSort;
+import org.crazycake.formSqlBuilder.exception.FormIsNullException;
 import org.crazycake.formSqlBuilder.model.Rule;
 import org.crazycake.formSqlBuilder.model.Sort;
 import org.crazycake.formSqlBuilder.model.SqlAndParams;
 import org.crazycake.formSqlBuilder.prop.RuleSchemeLoader;
 import org.crazycake.formSqlBuilder.ruleGenerator.DefaultRuleSchemeGenerator;
 import org.crazycake.formSqlBuilder.ruleGenerator.IRuleSchemeGenerator;
-import org.crazycake.formSqlBuilder.utils.CamelNameUtils;
+import org.crazycake.utils.CamelNameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +74,11 @@ public class FormSqlBuilder {
 	 */
 	private String ruleId;
 	
+	public FormSqlBuilder(Object form, String ruleId){
+		this.form = form;
+		this.ruleId = ruleId;
+	}
+	
 	/**
 	 * 添加排序
 	 * @param sorts
@@ -108,9 +114,6 @@ public class FormSqlBuilder {
 		}else if(ruleId != null && !"".equals(ruleId)){
 			//如果有配置 ruleId
 			ruleScheme = RuleSchemeLoader.get(ruleId);
-		}else if(RuleSchemeLoader.get("*") != null){
-			//如果有配置全局解析规则
-			ruleScheme = RuleSchemeLoader.get("*");
 		}else{
 			//如果全部没有就采用默认的DefaultRuleSchemeGenerator
 			DefaultRuleSchemeGenerator defaultRuleSchemeGenerator = new DefaultRuleSchemeGenerator();

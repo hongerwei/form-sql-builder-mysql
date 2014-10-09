@@ -9,8 +9,7 @@ import javax.persistence.Column;
 import org.crazycake.formSqlBuilder.model.Rule;
 import org.crazycake.formSqlBuilder.model.enums.Operator;
 import org.crazycake.formSqlBuilder.model.enums.Relation;
-import org.crazycake.formSqlBuilder.prop.PropertiesLoader;
-import org.crazycake.formSqlBuilder.utils.CamelNameUtils;
+import org.crazycake.utils.CamelNameUtils;
 
 /**
  * 默认的规则方案实现
@@ -39,7 +38,8 @@ public class DefaultRuleSchemeGenerator implements IRuleSchemeGenerator {
 			if("serialVersionUID".equals(fieldName)){
 				continue;
 			}
-						
+			
+			//get default rule: string => =, not string => like
 			Rule r = getDefaultRule(fields[i]);
 			queryRule.put(fieldName, r);
 		}

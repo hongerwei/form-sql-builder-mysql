@@ -8,19 +8,18 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.persistence.Column;
+
+import org.crazycake.formSqlBuilder.model.QueryNode;
 import org.crazycake.formSqlBuilder.model.Rule;
 import org.crazycake.formSqlBuilder.model.Sort;
 import org.crazycake.formSqlBuilder.model.SqlAndParams;
-import org.crazycake.formSqlBuilder.model.QueryNode;
-import org.crazycake.formSqlBuilder.model.enums.Operator;
-import org.crazycake.formSqlBuilder.utils.CamelNameUtils;
 import org.crazycake.formSqlBuilder.utils.ReflectUtils;
 import org.crazycake.formSqlBuilder.utils.RuleMatchUtils;
+import org.crazycake.utils.CamelNameUtils;
 
 /**
  * hibernate query对象的工具类
@@ -44,7 +43,7 @@ public class SqlGenerator {
 			if(i!=0){
 				sql += ",";
 			}else{
-				sql += " order by ";
+				sql += " ORDER BY ";
 			}
 			Sort sort = sorts.get(i);
 			
@@ -77,7 +76,7 @@ public class SqlGenerator {
 		if(rows == -1 || page == -1){
 			return sql;
 		}
-		sql = sql + " limit " + ((page-1)*rows) + "," + rows;
+		sql = sql + " LIMIT " + ((page-1)*rows) + "," + rows;
 		return sql;
 	}
 	
@@ -116,7 +115,7 @@ public class SqlGenerator {
 	public SqlAndParams generateSqlAndParams(Object form, Map<String, Rule> ruleScheme,String tableName) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException{
 		
 		StringBuffer sql = new StringBuffer();
-		sql.append("select * from " + tableName + " ");
+		sql.append("SELECT * FROM " + tableName + " ");
 		
 		SqlAndParams sqlAndParams = generateQueryBody(form, ruleScheme, sql);
 		return sqlAndParams;
@@ -138,7 +137,7 @@ public class SqlGenerator {
 	public SqlAndParams generateCountSqlAndParams(Object form, Map<String, Rule> ruleScheme,String tableName) throws IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchFieldException{
 		
 		StringBuffer sql = new StringBuffer();
-		sql.append("select count(1) from " + tableName + " ");
+		sql.append("SELECT count(1) FROM " + tableName + " ");
 		
 		SqlAndParams sqlAndParams = generateQueryBody(form, ruleScheme, sql);
 		
@@ -174,7 +173,7 @@ public class SqlGenerator {
 				if(paramCounter > 0){
 					sql.append(queryNode.getRel() + " ");
 				}else{
-					sql.append("where ");
+					sql.append("WHERE ");
 				}
 				
 				sql.append("( ");
@@ -195,7 +194,7 @@ public class SqlGenerator {
 				if(paramCounter > 0){
 					sql.append(queryNode.getRel() + " ");
 				}else{
-					sql.append("where ");
+					sql.append("WHERE ");
 				}
 				
 				sql.append(ReflectUtils.guessColumnName(form,queryNode.getField()) + " " + queryNode.getOp() + " ? ");

@@ -1,5 +1,7 @@
 package org.crazycake.formSqlBuilder.testvo;
 
+import javax.persistence.Transient;
+
 public class Person {
 	
 	private Integer activeStatus;
@@ -9,6 +11,8 @@ public class Person {
 	private String birthdayFrom;
 	private String afterThat;
 	private String birthday;
+	private String className;
+	private String password;
 	
 	public Person(String name, Integer age, String city, Integer activeStatus){
 		this.name = name;
@@ -72,5 +76,23 @@ public class Person {
 	public void setAfterThat(String afterThat) {
 		this.afterThat = afterThat;
 	}
+
+	@Transient
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getClassName() {
+		return className;
+	}
+
+	public void setClassName(String className) {
+		this.className = className;
+	}
+
 	
 }

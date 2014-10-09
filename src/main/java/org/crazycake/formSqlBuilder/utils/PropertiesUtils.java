@@ -47,7 +47,7 @@ public class PropertiesUtils {
 			hqlprop.load(in);
 			in.close();
 		} catch (Throwable e){
-			logger.info("Maybe formSqlBuilder.properties doesn't exist... But nevermind!");
+			logger.debug("no formSqlBuilder.properties");
 		}
 		return hqlprop;
 	}

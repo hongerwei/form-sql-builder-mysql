@@ -1,4 +1,4 @@
-package org.crazycake.formSqlBuilder;
+package org.crazycake.formSqlBuilder.exception;
 
 public class FormIsNullException extends Exception {
 	

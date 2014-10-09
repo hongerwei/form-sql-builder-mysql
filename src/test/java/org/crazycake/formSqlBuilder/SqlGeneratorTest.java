@@ -73,7 +73,7 @@ public class SqlGeneratorTest {
 		String sql = sqlAndParams.getSql();
 		
 		//check sql syntax
-		assertThat("the sql should have right syntax! sql=["+sql+"]",sql.contains("select ") && sql.contains(" from ") && sql.contains(" where "),is(true));
+		assertThat("the sql should have right syntax! sql=["+sql+"]",sql.contains("SELECT ") && sql.contains(" FROM ") && sql.contains(" WHERE "),is(true));
 		
 		//check activeStatus
 		assertThat("the sql should have active_status = 1", sql.contains("active_status = ?"), is(true));
