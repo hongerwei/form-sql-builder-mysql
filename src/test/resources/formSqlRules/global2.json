@@ -1,6 +1,11 @@
 {
 	"global2":[
 		{
+			"field":"String:selectedRoles",
+			"targetField":"roles",
+			"op":"in",
+			"rel":"and"
+		},{
 			"field":"String:*From",
 			"op":">",
 			"wildcardTargetField":true,

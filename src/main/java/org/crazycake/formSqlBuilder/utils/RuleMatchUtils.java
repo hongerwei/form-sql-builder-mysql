@@ -1,8 +1,10 @@
 package org.crazycake.formSqlBuilder.utils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 
 import org.crazycake.formSqlBuilder.model.QueryNode;
+import org.crazycake.formSqlBuilder.model.QueryNodeFactory;
 import org.crazycake.formSqlBuilder.model.Rule;
 
 public class RuleMatchUtils {
@@ -12,14 +14,19 @@ public class RuleMatchUtils {
 	 * @param field
 	 * @param rule
 	 * @return
+	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws SecurityException 
+	 * @throws IllegalArgumentException 
 	 */
-	public static QueryNode wildcardMatch(Field field, Rule rule){
+	public static QueryNode wildcardMatch(Field field, Rule rule, Object form) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException{
 		QueryNode node = null;
 		String fieldExpr = rule.getField();
 		
-		if("*".endsWith(fieldExpr)){
+		if("*".equals(fieldExpr)){
 			//match!
-			node = new QueryNode(field.getName(),rule.getOp().getSql(),rule.getRel().getSql());
+			node = QueryNodeFactory.createQueryNode(field.getName(), rule, form);
 		}
 		
 		if(fieldExpr.contains(":")){
@@ -29,13 +36,13 @@ public class RuleMatchUtils {
 			
 			if(matchType(typeExpr,field) && matchWildcardName(nameExpr,field.getName())){
 				//match!
-				node = createNodeAfterMatch(field, rule, nameExpr);
+				node = createNodeAfterMatch(field, rule, nameExpr, form);
 			}
 			
 		}else{
 			if(matchWildcardName(fieldExpr,field.getName())){
 				//match!
-				node = createNodeAfterMatch(field, rule, fieldExpr);
+				node = createNodeAfterMatch(field, rule, fieldExpr, form);
 			}
 		}
 		
@@ -50,15 +57,14 @@ public class RuleMatchUtils {
 	 * @param rule
 	 * @param fieldExpr
 	 * @return
+	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws SecurityException 
+	 * @throws IllegalArgumentException 
 	 */
-	private static QueryNode createNodeAfterMatch(Field field, Rule rule, String fieldExpr) {
-		QueryNode node;
-		if(rule.getWildcardTargetField()){
-			node = new QueryNode(getWildcardTargetField(fieldExpr, field.getName()),rule.getOp().getSql(),rule.getRel().getSql(),field.getName());
-		}else{
-			node = new QueryNode(field.getName(),rule.getOp().getSql(),rule.getRel().getSql());
-		}
-		return node;
+	private static QueryNode createNodeAfterMatch(Field field, Rule rule, String fieldExpr, Object form) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		return QueryNodeFactory.createQueryNode(field.getName(), rule, form);
 	}
 	
 	/**
@@ -110,43 +116,19 @@ public class RuleMatchUtils {
 		return false;
 	}
 	
-	/**
-	 * get wildcard field
-	 * @param wildcardExpr
-	 * @param fieldName
-	 * @return
-	 */
-	private static String getWildcardTargetField(String wildcardExpr,String fieldName){
-		String targetField = "";
-		int wildcardIndex = wildcardExpr.indexOf("*");
-		if(wildcardIndex==0){
-			//begin of line
-			String suffix = wildcardExpr.substring(1);
-			int suffixLen = suffix.length();
-			targetField = fieldName.substring(0, (fieldName.length()-suffixLen));
-		}else if(wildcardIndex==(wildcardExpr.length()-1)){
-			//end of line
-			String prefix = wildcardExpr.substring(0,wildcardExpr.length()-1);
-			targetField = fieldName.substring(prefix.length());
-		}else{
-			//middle of line
-			String[] fixArr = wildcardExpr.split("*");
-			String prefix = fixArr[0];
-			String suffix = fixArr[1];
-			//match!
-			int suffixLen = suffix.length();
-			targetField = fieldName.substring(prefix.length(),(fieldName.length()-suffixLen));
-		}
-		return targetField;
-	}
 	
 	/**
 	 * fullname like String:name
 	 * @param field
 	 * @param rule
 	 * @return
+	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws SecurityException 
+	 * @throws IllegalArgumentException 
 	 */
-	public static QueryNode fullnameMatch(Field field, Rule rule){
+	public static QueryNode fullnameMatch(Field field, Rule rule, Object form) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException{
 		
 		//full name match
 		String[] temp = rule.getField().split(":");
@@ -163,7 +145,7 @@ public class RuleMatchUtils {
 		}
 		
 		//match!
-		QueryNode node = new QueryNode(field.getName(),rule.getOp().getSql(),rule.getRel().getSql());
+		QueryNode node = QueryNodeFactory.createQueryNode(field.getName(), rule, form);
 		return node;
 	}
 	
@@ -172,15 +154,20 @@ public class RuleMatchUtils {
 	 * @param field
 	 * @param rule
 	 * @return
+	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws SecurityException 
+	 * @throws IllegalArgumentException 
 	 */
-	public static QueryNode shortnameMatch(Field field, Rule rule){
+	public static QueryNode shortnameMatch(Field field, Rule rule, Object form) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException{
 		String fieldExpr = rule.getField();
 		if(!field.getName().equals(fieldExpr)){
 			return null;
 		}
-		
+				
 		//match!
-		QueryNode node = new QueryNode(field.getName(), rule.getOp().getSql(),rule.getRel().getSql());
+		QueryNode node = QueryNodeFactory.createQueryNode(field.getName(), rule, form);
 		return node;
 		
 	}

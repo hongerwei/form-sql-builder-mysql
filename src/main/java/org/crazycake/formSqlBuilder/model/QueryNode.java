@@ -8,10 +8,7 @@ public class QueryNode {
 	private String field;
 	private String op;
 	private String rel;
-	/**
-	 * only used for wildcardTargetField=true
-	 */
-	private String sourceField;
+	private Object value;
 	
 	private List<QueryNode> members = new ArrayList<QueryNode>();
 	
@@ -21,24 +18,11 @@ public class QueryNode {
 	 * @param op
 	 * @param rel
 	 */
-	public QueryNode(String field,String op,String rel){
+	public QueryNode(String field,String op,String rel,Object value){
 		this.field = field;
 		this.op = op;
 		this.rel = rel;
-	}
-	
-	/**
-	 * used for wildcard matched node with wildcardTargetField=true
-	 * @param field
-	 * @param op
-	 * @param rel
-	 * @param sourceField
-	 */
-	public QueryNode(String field,String op,String rel, String sourceField){
-		this.field = field;
-		this.op = op;
-		this.rel = rel;
-		this.sourceField = sourceField;
+		this.value = value;
 	}
 	
 	/**
@@ -82,11 +66,12 @@ public class QueryNode {
 		this.members.add(member);
 	}
 
-	public String getSourceField() {
-		return sourceField;
+	public Object getValue() {
+		return value;
 	}
 
-	public void setSourceField(String sourceField) {
-		this.sourceField = sourceField;
+	public void setValue(Object value) {
+		this.value = value;
 	}
+
 }
