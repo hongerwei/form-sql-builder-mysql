@@ -174,8 +174,8 @@ In this example, it will match `birthdayFrom` but it will generate SQL like `AND
 
 ###All support relations
 
-|rel		|
-|--	-----	|
+|rel	|
+|-------|
 |`and`	|
 |`or`	|
 
