@@ -138,11 +138,11 @@ Here are points of match rule writing
 
 ###Rule fields
 |field|required|default|description|
-|---|---|------|
+|---|---|------|-----|
 |field|required||field match expression|
 |op|required||operator|
 |rel|required||relation|
-|targetField|optional|field|assign another field as sql column. You can only choose to set one of `wildcardTargetField` or `targetField`.|
+|targetField|optional|field|Assign another field as sql column. You can only choose to set one of `wildcardTargetField` or `targetField`|
 |wildcardTargetField|optional|false|whether to use the wildcard matched part as target field name|
 |members|optional||a group of rules|
 
