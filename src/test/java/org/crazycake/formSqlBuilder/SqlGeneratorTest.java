@@ -105,6 +105,6 @@ public class SqlGeneratorTest {
 		assertThat("second should be 2000-01-01",(String)values[1],is("2000-01-01"));
 		assertThat("3th should be michael",(String)values[2],is("michael"));
 		assertThat("4th should be miami",(String)values[3],is("miami"));
-		assertThat("5th should be miami",(Integer)values[4],is(28));
+		assertThat("5th should be 28",(Integer)values[4],is(28));
 	}
 }

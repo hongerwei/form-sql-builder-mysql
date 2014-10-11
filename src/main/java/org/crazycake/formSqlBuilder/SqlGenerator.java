@@ -17,6 +17,7 @@ import org.crazycake.formSqlBuilder.model.QueryNode;
 import org.crazycake.formSqlBuilder.model.Rule;
 import org.crazycake.formSqlBuilder.model.Sort;
 import org.crazycake.formSqlBuilder.model.SqlAndParams;
+import org.crazycake.formSqlBuilder.model.enums.Operator;
 import org.crazycake.formSqlBuilder.utils.ReflectUtils;
 import org.crazycake.formSqlBuilder.utils.RuleMatchUtils;
 import org.crazycake.utils.CamelNameUtils;
@@ -183,8 +184,8 @@ public class SqlGenerator {
 					if(i != 0){
 						sql.append(node.getRel() + " ");
 					}
-					sql.append(ReflectUtils.guessColumnName(form,node.getField()) + " " + node.getOp() + " ? ");
-					params.add(getValue(form, node));
+					sql.append(generateSql(form, node));
+					addParams(params, node);
 				}
 				sql.append(") ");
 				
@@ -197,8 +198,9 @@ public class SqlGenerator {
 					sql.append("WHERE ");
 				}
 				
-				sql.append(ReflectUtils.guessColumnName(form,queryNode.getField()) + " " + queryNode.getOp() + " ? ");
-				params.add(getValue(form,queryNode));
+				sql.append(generateSql(form, queryNode));
+				addParams(params, queryNode);
+				
 				paramCounter++;
 			}
 		}
@@ -210,6 +212,51 @@ public class SqlGenerator {
 
 		//return it!
 		return sqlAndParams;
+	}
+	
+	/**
+	 * add params
+	 * @param params
+	 * @param queryNode
+	 */
+	private void addParams(List<Object> params, QueryNode queryNode) {
+		if(queryNode.getValue() !=null && queryNode.getValue().getClass().getName().endsWith(".ArrayList")){
+			//if the value is a list, for example: in operator
+			List<Object> vlist = (List)queryNode.getValue();
+			for(Object v:vlist){
+				params.add(v);
+			}
+		}else{
+			params.add(queryNode.getValue());
+		}
+	}
+	
+	/**
+	 * generate sql
+	 * @param form
+	 * @param node
+	 * @return
+	 * @throws NoSuchMethodException
+	 */
+	private String generateSql(Object form, QueryNode node) throws NoSuchMethodException {
+		String sql = "";
+		if(Operator.IN.getSql().equals(node.getOp())){
+			List<Object> vlist = (List)node.getValue();
+			StringBuilder sb = new StringBuilder();
+			sb.append("(");
+			for(int i=0;i<vlist.size();i++){
+				if(i!=0){
+					sb.append(",");
+				}
+				sb.append("?");
+			}
+			sb.append(")");
+			
+			sql = ReflectUtils.guessColumnName(form,node.getField()) + " " + node.getOp() + " " + sb.toString() + " ";
+		}else{
+			sql = ReflectUtils.guessColumnName(form,node.getField()) + " " + node.getOp() + " ? ";
+		}
+		return sql;
 	}
 	
 	/**
@@ -225,22 +272,27 @@ public class SqlGenerator {
 	 * @throws SecurityException 
 	 * @throws IllegalArgumentException 
 	 */
-	private Object getValue(Object form,QueryNode queryNode) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException{
-		String sourceField = queryNode.getSourceField();
-		if(sourceField != null && !"".equals(sourceField)){
-			return ReflectUtils.getValue(form,sourceField);
-		}else{
-			return ReflectUtils.getValue(form,queryNode.getField());
-		}
-	}
+//	private Object getValue(Object form,QueryNode queryNode) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException{
+//		String sourceField = queryNode.getSourceField();
+//		if(sourceField != null && !"".equals(sourceField)){
+//			return ReflectUtils.getValue(form,sourceField);
+//		}else{
+//			return ReflectUtils.getValue(form,queryNode.getField());
+//		}
+//	}
 	
 	/**
 	 * pick field from class with rule
 	 * @param form
 	 * @param ruleScheme
 	 * @return
+	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws SecurityException 
+	 * @throws IllegalArgumentException 
 	 */
-	private List<QueryNode> pickFieldWithRule(Object form, Map<String, Rule> ruleScheme){
+	private List<QueryNode> pickFieldWithRule(Object form, Map<String, Rule> ruleScheme) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException{
 		//遍历all fields to make a field map
 		List<Field> fieldList = createFieldList(form);
 		
@@ -254,7 +306,7 @@ public class SqlGenerator {
 			Rule rule = ruleEntry.getValue();
 			
 			//scan the field map and try to collect field
-			List<QueryNode> pickResult = pickFields(fieldList, rule);
+			List<QueryNode> pickResult = pickFields(fieldList, rule, form);
 			collectedResult.addAll(pickResult);
 		}
 		
@@ -302,8 +354,13 @@ public class SqlGenerator {
 	 * @param fieldList
 	 * @param rule
 	 * @return
+	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws SecurityException 
+	 * @throws IllegalArgumentException 
 	 */
-	private List<QueryNode> pickFields(List<Field> fieldList, Rule rule){
+	private List<QueryNode> pickFields(List<Field> fieldList, Rule rule, Object form) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException{
 		
 		List<QueryNode> pickResult = new ArrayList<QueryNode>();
 		
@@ -312,7 +369,7 @@ public class SqlGenerator {
 			List<Rule> members = rule.getMembers();
 			List<QueryNode> queryNodeMembers = new ArrayList<QueryNode>();
 			for(Rule member:members){
-				List<QueryNode> queryNodes = pickFieldsWithSingleRule(fieldList,member);
+				List<QueryNode> queryNodes = pickFieldsWithSingleRule(fieldList,member,form);
 				queryNodeMembers.addAll(queryNodes);
 			}
 			if(queryNodeMembers.size()>0){
@@ -321,7 +378,7 @@ public class SqlGenerator {
 			}
 		}else{
 			//it's a single node
-			List<QueryNode> queryNodes = pickFieldsWithSingleRule(fieldList,rule);
+			List<QueryNode> queryNodes = pickFieldsWithSingleRule(fieldList,rule,form);
 			pickResult.addAll(queryNodes);
 		}
 		
@@ -333,15 +390,20 @@ public class SqlGenerator {
 	 * @param fieldList
 	 * @param rule
 	 * @return
+	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws SecurityException 
+	 * @throws IllegalArgumentException 
 	 */
-	private List<QueryNode> pickFieldsWithSingleRule(List<Field> fieldList, Rule rule){
+	private List<QueryNode> pickFieldsWithSingleRule(List<Field> fieldList, Rule rule,Object form) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException{
 		List<QueryNode> pickResult = new ArrayList<QueryNode>();
 		
 		Iterator<Field> it = fieldList.iterator();
 		while(it.hasNext()){
 			Field field = it.next();
 			
-			QueryNode queryNode = matchRule(field,rule);
+			QueryNode queryNode = matchRule(field,rule, form);
 			
 			if(queryNode != null){
 				pickResult.add(queryNode);
@@ -356,20 +418,25 @@ public class SqlGenerator {
 	 * @param field
 	 * @param rule
 	 * @return
+	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws SecurityException 
+	 * @throws IllegalArgumentException 
 	 */
-	private QueryNode matchRule(Field field,Rule rule){
+	private QueryNode matchRule(Field field,Rule rule, Object form) throws IllegalArgumentException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException{
 		QueryNode queryNode = null;
 		
 		String fieldExpr = rule.getField();
 		if(fieldExpr.contains("*")){
 			//wildcard match
-			queryNode = RuleMatchUtils.wildcardMatch(field, rule);
+			queryNode = RuleMatchUtils.wildcardMatch(field, rule, form);
 		}else if(fieldExpr.contains(":")){
 			//full name match
-			queryNode = RuleMatchUtils.fullnameMatch(field, rule);
+			queryNode = RuleMatchUtils.fullnameMatch(field, rule, form);
 		}else{
 			//short nama match
-			queryNode = RuleMatchUtils.shortnameMatch(field, rule);
+			queryNode = RuleMatchUtils.shortnameMatch(field, rule, form);
 		}
 		
 		return queryNode;

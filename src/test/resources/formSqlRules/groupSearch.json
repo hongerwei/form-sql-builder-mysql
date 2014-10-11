@@ -13,7 +13,7 @@
 					"rel":"or"
 				},
 				{
-					"field":"*:*",
+					"field":"Integer:age",
 					"op":"=",
 					"rel":"or"
 				}

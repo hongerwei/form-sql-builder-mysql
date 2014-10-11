@@ -129,5 +129,188 @@ Then you can use this sql and values to query database.
 #Further more
 I will introduce more features I mentioned in introduction. 
 
+##Match rules
+Here are points of match rule writing
+- The priority of above rule is higher then the below rule. 
+- `FormSqlBuilder` support wildcard match.
+- When you use wildcard match expression you can assign `wildcardTargetField` value to let it use the wildcard matched part as the column name in SQL.
+- field should be wrote like `Class type`:`Match expression`, like `String:name`, `Boolean:married`, `String:*From`, `String:After*`, `*:*`
+
+###Rule fields
+|field|required|default|description|
+|---|---|------|
+|field|required||field match expression|
+|op|required||operator|
+|rel|required||relation|
+|targetField|optional|field|assign another field as sql column. You can only choose to set one of `wildcardTargetField` or `targetField`.|
+|wildcardTargetField|optional|false|whether to use the wildcard matched part as target field name|
+|members|optional||a group of rules|
+
+###Wildcard match
+```json
+{
+    "field":"String:*From",
+	"op":">",
+	"wildcardTargetField":true,
+	"rel":"and"
+}
+```
+In this example, it will match `birthdayFrom` but it will generate SQL like `AND birthday > ?`
+
+###All support operators
+
+| op	|
+|-------|
+|`=`		|
+|`<`		|
+|`>`		|
+|`<>`	|
+|`like`	|
+|`not like`|
+|`in`	|
+|`not in`|
+|`<=`	|
+|`>=`	|
+
+###All support relations
+
+|rel		|
+|--	-----	|
+|`and`	|
+|`or`	|
+
+
 ##How to deal with range search
-At search page we may mean the date range search. Here is how `FormSqlBuilder` deal with this situation
+At search page we may mean the date range search. Here is how `FormSqlBuilder` deal with this situation.
+I will use an example to show you how to generate date range search sql.
+###Example
+Imagine that you want to search all people who born between 1980-1-1 to 1981-1-1. So there will be 2 date picker on search page which are "birthday from date" and "birthday to date".  After you choose "birthday from date" to "1980-1-1" and "birthday to date" to "1981-1-1", click search button. `FormSqlBuilder` will change your search query condition into `WHERE birthday > ? and birthday < ?` . Let's see how to make this happen.
+####STEP 1 Add @Transient fields
+Add 2 transient fields `birthdayFrom` and `birthdayTo` to `Person.java`. like this
+```java
+package org.crazycake.formSqlBuilder.testvo;
+import javax.persistence.Transient;
+
+public class Person {
+
+	private String name;
+	private String birthday;
+	private String birthdayFrom;
+	private String birthdayTo;
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	@Transient
+	public String getBirthdayFrom() {
+		return birthdayFrom;
+	}
+	public void setBirthdayFrom(String birthdayFrom) {
+		this.birthdayFrom = birthdayFrom;
+	}
+	@Transient
+	public String getBirthdayTo() {
+		return birthdayTo;
+	}
+	public void setBirthdayTo(String birthdayTo) {
+		this.birthdayTo = birthdayTo;
+	}
+	public String getBirthday() {
+		return birthday;
+	}
+	public void setBirthday(String birthday) {
+		this.birthday = birthday;
+	}
+	
+}
+```
+
+Remember to put the value of "birthday from date" to `birthdayFrom` and "birthday to date" to `birthdayTo`.
+
+####STEP 4 Add rules
+Change the form to sql rules we used before, add 2 new rules
+```json
+{
+	"global":[
+		{
+			"field":"String:*From",
+			"op":">",
+			"wildcardTargetField":true,
+			"rel":"and"
+		},{
+			"field":"String:*To",
+			"op":"<",
+			"wildcardTargetField":true,
+			"rel":"and"
+		},{
+			"field":"String:*",
+			"op":"like",
+			"rel":"and"
+		},{
+			"field":"*:*",
+			"op":"=",
+			"rel":"and"
+		}
+	]
+}
+```
+`wildcardTargetField` means use the part of wildcard as column name. In this example , if we turn `wildcardTargetField` to `true`. The Sql will be `birthday < ?` , if we turn `wildcardTargetField` to `false` to don't set this property which `FormSqlBuilder` will use its default value `false`, the sql will be `birthday_to < ?`.
+
+####STEP 5 Call FormSqlBuilder
+After everything is done. Let's call `FormSqlBuilder` to generate the sql and parameters.
+```java
+@Test
+public void testBuild() throws Exception {
+	Person form = new Person();
+	form.setBirthdayFrom("1980-01-01");
+	form.setBirthdayTo("1981-01-01");
+	FormSqlBuilder b = new FormSqlBuilder(form, "global2");
+	SqlAndParams s = b.build();
+	System.out.println(s.getSql());
+	System.out.println(s.getParams()[0]);
+	System.out.println(s.getParams()[1]);
+}
+```
+
+Console output
+```
+SELECT * FROM person WHERE birthday > ? AND birthday < ? 
+1980-01-01
+1981-01-01
+```
+
+##What if comes to group search
+When you means requirement like : the search conditions on page are need to separate into 2 groups and join with `AND`.
+For example you want to search for people whose name is jack OR whose age is 23 , but these people `activeStatus` must be `true`  means they still working in our company not leaved. That's a common situation.
+
+Here is the rule json
+```json
+{
+	"groupSearch":[
+		{
+			"field":"Integer:activeStatus",
+			"op":"=",
+			"rel":"and"
+		},{				
+			"rel":"and",
+			"members":[
+				{
+					"field":"String:name",
+					"op":"like",
+					"rel":"or"
+				},
+				{
+					"field":"Integer:age",
+					"op":"=",
+					"rel":"or"
+				}
+			]
+		}
+	]
+}
+``` 
+You can use `members` field to define more rules under this rule.
+

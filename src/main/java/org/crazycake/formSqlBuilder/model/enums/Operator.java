@@ -26,7 +26,7 @@ public enum Operator {
 	NOT_EQUAL("nq","<>"),
 	LIKE("lk","like"),
 	NOT_LIKE("nk","not like"),
-	IN("in"," in "),
+	IN("in","in"),
 	NOT_IN("Nn","not in"),
 	LESS_THAN_OR_EQUAL_TO("lteq","<="),
 	GREAT_THAN_OR_EQUAL_TO("gteq",">=");

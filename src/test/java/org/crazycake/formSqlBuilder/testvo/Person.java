@@ -13,6 +13,8 @@ public class Person {
 	private String birthday;
 	private String className;
 	private String password;
+	private String roles;
+	private String selectedRoles;
 	
 	public Person(String name, Integer age, String city, Integer activeStatus){
 		this.name = name;
@@ -92,6 +94,23 @@ public class Person {
 
 	public void setClassName(String className) {
 		this.className = className;
+	}
+
+	public String getRoles() {
+		return roles;
+	}
+
+	public void setRoles(String roles) {
+		this.roles = roles;
+	}
+
+	@Transient
+	public String getSelectedRoles() {
+		return selectedRoles;
+	}
+
+	public void setSelectedRoles(String selectedRoles) {
+		this.selectedRoles = selectedRoles;
 	}
 
 	

@@ -33,5 +33,29 @@ public class FormSqlBuilderTest {
 		assertThat(s.getSql(),is("SELECT * FROM person WHERE name like ? AND city like ? AND active_status = ? AND age = ?  LIMIT 0,20"));
 		assertThat((Integer)s.getParams()[2],is(1));
 	}
+	
+	@Test
+	public void testBuildWithWildcard() throws IllegalArgumentException, SecurityException, FormIsNullException, SQLException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, NoSuchFieldException {
+		Person form = new Person("jack", 36, "ny", 1);
+		form.setBirthdayFrom("1980-01-01");
+		FormSqlBuilder b = new FormSqlBuilder(form, "global2");
+		b.addLimit(1, 20);
+		SqlAndParams s = b.build();
+		assertThat(s.getSql(),is("SELECT * FROM person WHERE birthday > ? AND name like ? AND city like ? AND active_status = ? AND age = ?  LIMIT 0,20"));
+		assertThat((String)s.getParams()[0],is("1980-01-01"));
+	}
+	
+	@Test
+	public void testBuildWithIn() throws IllegalArgumentException, SecurityException, FormIsNullException, SQLException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, NoSuchFieldException {
+		Person form = new Person("jack", 36, "ny", 1);
+		form.setSelectedRoles("user,admin,developer");
+		FormSqlBuilder b = new FormSqlBuilder(form, "global2");
+		SqlAndParams s = b.build();
+		assertThat(s.getSql(),is("SELECT * FROM person WHERE roles in (?,?,?) AND name like ? AND city like ? AND active_status = ? AND age = ? "));
+		assertThat((String)s.getParams()[0],is("user"));
+		assertThat((String)s.getParams()[1],is("admin"));
+		assertThat((String)s.getParams()[2],is("developer"));
+		assertThat((String)s.getParams()[3],is("jack"));
+	}
 
 }

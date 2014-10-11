@@ -14,15 +14,6 @@ import org.junit.Test;
 public class ReflectUtilsTest {
 
 	@Test
-	public void testGetFormValue() throws SecurityException, IllegalArgumentException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-		
-		Person form = new Person("lily", 12, "newyork", 1);
-		Object v = ReflectUtils.getFormValue(form, "city");
-		
-		assertThat((String)v,is("newyork"));
-	}
-
-	@Test
 	public void testCheckIsTransient() throws SecurityException, NoSuchMethodException {
 		Person form = new Person("lily", 12, "newyork", 1);
 		form.setPassword("123");

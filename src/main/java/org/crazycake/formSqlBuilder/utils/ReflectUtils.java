@@ -14,21 +14,21 @@ public class ReflectUtils {
 	
 	private static Logger logger = LoggerFactory.getLogger(ReflectUtils.class);
 	
+	
 	/**
-	 * 从表单中通过反射获取值
+	 * 
 	 * @param form
 	 * @param fieldName
 	 * @return
-	 * @throws SecurityException 
-	 * @throws NoSuchMethodException
-	 * @throws IllegalArgumentException 
+	 * @throws IllegalArgumentException
 	 * @throws IllegalAccessException
 	 * @throws InvocationTargetException
+	 * @throws SecurityException
+	 * @throws NoSuchMethodException
 	 */
-	public static Object getFormValue(Object form, String fieldName) throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException{
-		Object value =  null;
-		Method getter = getGetterByFieldName(form,fieldName);
-		value = getter.invoke(form);
+	public static Object getValue(Object form,String fieldName) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchMethodException{
+		Method getter = ReflectUtils.getGetterByFieldName(form, fieldName);
+		Object value = getter.invoke(form);
 		return value;
 	}
 	
@@ -85,22 +85,5 @@ public class ReflectUtils {
 			colName = CamelNameUtils.camel2underscore(fieldName);
 		}
 		return colName;
-	}
-	
-	/**
-	 * 
-	 * @param form
-	 * @param fieldName
-	 * @return
-	 * @throws IllegalArgumentException
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
-	 * @throws SecurityException
-	 * @throws NoSuchMethodException
-	 */
-	public static Object getValue(Object form,String fieldName) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException, SecurityException, NoSuchMethodException{
-		Method getter = ReflectUtils.getGetterByFieldName(form, fieldName);
-		Object value = getter.invoke(form);
-		return value;
 	}
 }

@@ -194,6 +194,12 @@ public class PropertiesUtils {
 		r.setTargetField((String)ruleMap.get("targetField"));
 		r.setOp(Operator.find((String)ruleMap.get("op")));
 		r.setRel(Relation.find((String)ruleMap.get("rel")));
+		
+		//wildcardTargetField is optional
+		Object wildcardTargetField = ruleMap.get("wildcardTargetField");
+		if(wildcardTargetField != null){
+			r.setWildcardTargetField((Boolean)wildcardTargetField);
+		}
 		return r;
 	}
 
