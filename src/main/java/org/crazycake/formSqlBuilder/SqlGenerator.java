@@ -240,7 +240,7 @@ public class SqlGenerator {
 	 */
 	private String generateSql(Object form, QueryNode node) throws NoSuchMethodException {
 		String sql = "";
-		if(Operator.IN.getSql().equals(node.getOp())){
+		if(Operator.IN.getSql().equals(node.getOp()) || Operator.NOT_IN.getSql().equals(node.getOp())){
 			List<Object> vlist = (List)node.getValue();
 			StringBuilder sb = new StringBuilder();
 			sb.append("(");

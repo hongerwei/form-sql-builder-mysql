@@ -180,7 +180,7 @@ In this example, it will match `birthdayFrom` but it will generate SQL like `AND
 |`or`	|
 
 
-##How to deal with range search
+##Range search
 At search page we may mean the date range search. Here is how `FormSqlBuilder` deal with this situation.
 I will use an example to show you how to generate date range search sql.
 ###Example
@@ -282,7 +282,7 @@ SELECT * FROM person WHERE birthday > ? AND birthday < ?
 1981-01-01
 ```
 
-##What if comes to group search
+##Group search
 When you means requirement like : the search conditions on page are need to separate into 2 groups and join with `AND`.
 For example you want to search for people whose name is jack OR whose age is 23 , but these people `activeStatus` must be `true`  means they still working in our company not leaved. That's a common situation.
 
@@ -314,3 +314,87 @@ Here is the rule json
 ``` 
 You can use `members` field to define more rules under this rule.
 
+##Limit
+You can call `addLimit(page,pageSize)` to add limit to sql. `page` begin from 1.
+```java
+public void testBuild() throws Exception {
+		Person form = new Person("jack", 36, "ny", 1);
+		FormSqlBuilder b = new FormSqlBuilder(form, "global2");
+		b.addLimit(1, 20);
+		SqlAndParams s = b.build();
+		assertThat(s.getSql(),is("SELECT * FROM person WHERE name like ? AND city like ? AND active_status = ? AND age = ?  LIMIT 0,20"));
+		assertThat((Integer)s.getParams()[2],is(1));
+	}
+```
+##Sort(Order by)
+You can use `addSort(sort)` to add `order by` to sql. sort must be a `Sort` class . The  constructor accept 2 parameters which are the field you need to sort and the orientation is`asc` or `desc`
+
+```java
+@Test
+	public void testBuild() throws Exception {
+		Person form = new Person("jack", 36, "ny", 1);
+		FormSqlBuilder b = new FormSqlBuilder(form, "global2");
+		b.addLimit(1, 20);
+		b.addSort(new Sort("activeStatus", "asc"));
+		SqlAndParams s = b.build();
+		assertThat(s.getSql(),is("SELECT * FROM person WHERE name like ? AND city like ? AND active_status = ? AND age = ?  ORDER BY active_status asc LIMIT 0,20"));
+		assertThat((Integer)s.getParams()[2],is(1));
+	}
+```
+
+##IN (NOT IN)
+If you want `FormSqlBuilder` to turn your form into sql with `IN` or `NOT IN`. You need to 
+###STEP 1 add a transient field
+Add a transient field beside the real field you want to search by `IN` like this
+```java
+private Stirng roles;
+private String selectedRoles;
+public String getRoles() {
+	return roles;
+}
+
+public void setRoles(String roles) {
+	this.roles = roles;
+}
+@Transient
+public String getSelectedRoles() {
+	return selectedRoles;
+}
+
+public void setSelectedRoles(String selectedRoles) {
+	this.selectedRoles = selectedRoles;
+}
+```
+This field is used to received the input from web page. This field value separate with common. 
+
+###STEP 2 Add a rule
+Add a rule
+```json
+{
+	"field":"String:selectedRoles",
+	"targetField":"roles",
+	"op":"in",
+	"rel":"and"
+}
+```
+###STEP 3 
+Use `FormSqlBuilder` like usual.
+```java
+@Test
+public void testBuildWithIn() throws Exception {
+	Person form = new Person("jack", 36, "ny", 1);
+	form.setSelectedRoles("user,admin,developer");
+	FormSqlBuilder b = new FormSqlBuilder(form, "global2");
+	SqlAndParams s = b.build();
+	assertThat(s.getSql(),is("SELECT * FROM person WHERE roles in (?,?,?) AND name like ? AND city like ? AND active_status = ? AND age = ? "));
+	assertThat((String)s.getParams()[0],is("user"));
+	assertThat((String)s.getParams()[1],is("admin"));
+	assertThat((String)s.getParams()[2],is("developer"));
+	assertThat((String)s.getParams()[3],is("jack"));
+}
+```
+
+If you found any bugs
+===========
+
+Please send email to idante@qq.com

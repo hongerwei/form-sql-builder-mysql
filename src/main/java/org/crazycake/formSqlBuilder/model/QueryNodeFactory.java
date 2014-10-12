@@ -25,7 +25,7 @@ public class QueryNodeFactory {
 		
 		//if operator is IN
 		Object v = ReflectUtils.getValue(form, sourceField);
-		if(rule.getOp()==Operator.IN){
+		if(rule.getOp()==Operator.IN || rule.getOp()==Operator.NOT_IN){
 			String vs = (String)v;
 			String[] varray = vs.split(",");
 			ArrayList<Object> vlist = new ArrayList<Object>();

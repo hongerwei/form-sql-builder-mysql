@@ -6,6 +6,11 @@
 			"op":"in",
 			"rel":"and"
 		},{
+			"field":"String:notSelectedRoles",
+			"targetField":"roles",
+			"op":"not in",
+			"rel":"and"
+		},{
 			"field":"String:*From",
 			"op":">",
 			"wildcardTargetField":true,

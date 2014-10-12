@@ -15,6 +15,7 @@ public class Person {
 	private String password;
 	private String roles;
 	private String selectedRoles;
+	private String notSelectedRoles;
 	
 	public Person(String name, Integer age, String city, Integer activeStatus){
 		this.name = name;
@@ -111,6 +112,15 @@ public class Person {
 
 	public void setSelectedRoles(String selectedRoles) {
 		this.selectedRoles = selectedRoles;
+	}
+
+	@Transient
+	public String getNotSelectedRoles() {
+		return notSelectedRoles;
+	}
+
+	public void setNotSelectedRoles(String notSelectedRoles) {
+		this.notSelectedRoles = notSelectedRoles;
 	}
 
 	

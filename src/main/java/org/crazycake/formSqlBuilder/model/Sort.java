@@ -11,9 +11,9 @@ public class Sort {
 
 	private Order order;
 
-	public Sort(){}
+	private Sort(){}
 	
-	public Sort(String sort, Order order){
+	private Sort(String sort, Order order){
 		this.sort = sort;
 		this.order = order;
 	}
