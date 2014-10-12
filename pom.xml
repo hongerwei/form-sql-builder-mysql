@@ -8,7 +8,7 @@
 	<packaging>jar</packaging>
 
 	<name>form-sql-builder-mysql</name>
-	<description>It can help you to transform search form from browser into sql.</description>
+	<description>As a programmer did you have the experience that when you comes to implement a search page you can only transform the search form into sql manually? If your project have 20 search page like that then you have to write 20 times to implement the sql query. It’s boring and anxious. form-sql-builder-mysql is designed for ease the burden for you. It can help you to transform search or list form sent from browser into query sql automatically.</description>
 	<url>https://github.com/alexxiyang/form-sql-builder-mysql</url>
 
   <properties>
